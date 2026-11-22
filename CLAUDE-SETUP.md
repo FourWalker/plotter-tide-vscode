@@ -29,7 +29,9 @@ Repository: https://github.com/FourWalker/plotter-tide-vscode
    - `Ctrl+K Ctrl+T` → **Plotter Tide** or **Plotter Tide Night**
    - Accept the prompt *"Turn on the animated Plotter Tide background?"* → **Turn on** → **Restart VS Code**.
      Without the prompt, run `Ctrl+Shift+P` → **Plotter Tide: Enable Animated Background**.
-   - When VS Code says its installation "appears to be corrupt": that's expected. Gear → **Don't Show Again**.
+   - There should be no "installation appears to be corrupt" warning: the extension keeps VS Code's checksum for
+     `workbench.html` (in `resources\app\product.json` → `checksums`) in sync. If it shows once anyway, restarting
+     VS Code clears it.
 
 ## How to check it worked
 

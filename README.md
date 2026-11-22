@@ -20,7 +20,7 @@ Download `plotter-tide-<version>.vsix` from the
 - In a terminal, from the folder holding it:
 
   ```powershell
-  code --install-extension "plotter-tide-1.0.1.vsix"
+  code --install-extension "plotter-tide-1.0.2.vsix"
   ```
 
 Then:
@@ -29,8 +29,9 @@ Then:
 2. **Turn on the moving background (optional):** accept the "Turn on the animated Plotter Tide background?" prompt
    that appears once you pick a Plotter Tide theme, or run `Ctrl+Shift+P` → **Plotter Tide: Enable Animated Background**
    → **Restart VS Code**.
-3. VS Code will then say *"Your Code installation appears to be corrupt"*. That's expected (VS Code noticed its
-   own file was changed). Click the gear → **Don't Show Again**.
+3. No "installation appears to be corrupt" warning: the extension updates VS Code's checksum for the file it
+   changes. If the warning still appears once (for example the first start after a VS Code update), restart VS Code
+   and it should be gone.
 
 Turn the background off with **Plotter Tide: Disable Animated Background**. Do that **before uninstalling** the
 extension, or the background stays until the next VS Code update.
@@ -46,6 +47,10 @@ VS Code has no supported way to set a background image. Like the popular "Backgr
 one `<style>` block to VS Code's own `workbench.html` (found from `vscode.env.appRoot`), between
 `<!-- plotter-tide:start -->` and `<!-- plotter-tide:end -->` markers. Disable removes exactly that block and
 leaves the file byte for byte as it was.
+
+VS Code keeps a SHA-256 checksum of that file in its `product.json` and warns that the installation "appears to
+be corrupt" when they don't match. So the extension also updates that one checksum whenever it changes the file,
+and Disable puts the original back. Only that value in `product.json` changes.
 
 - **VS Code updates** replace that file, so the background disappears. On the next start the extension asks
   **Install again?**.

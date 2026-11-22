@@ -2,8 +2,9 @@
 //
 // VS Code has no API for background images, so the background works the way the popular "Background" extensions do:
 // it adds one <style> block to VS Code's own workbench.html, between two marker comments. "Disable" removes exactly
-// that block. VS Code then reports its installation as "corrupt" (a checksum warning; harmless), and an update of
-// VS Code replaces workbench.html, so the patch has to be applied again; this extension offers that on startup.
+// that block. It also updates that file's checksum in VS Code's product.json, so VS Code doesn't report its
+// installation as "corrupt". An update of VS Code replaces both files, so the patch has to be applied again; this
+// extension offers that on startup.
 'use strict'
 
 const vscode = require('vscode')
@@ -62,9 +63,34 @@ function buildStyle(extensionPath) {
   return `${START}<style id="plotter-tide-background">${css}</style>${END}`
 }
 
+/**
+ * VS Code lists a SHA-256 of workbench.html in product.json and shows "installation appears to be corrupt" when the
+ * file no longer matches. After every write, set that one entry to the file's current hash. Only the value is
+ * replaced, so product.json keeps its formatting. Because Disable restores the file byte for byte, this also puts
+ * the original checksum back. Returns false if product.json couldn't be updated (the warning then shows, as before).
+ */
+function syncChecksum(file) {
+  const product = path.join(vscode.env.appRoot, 'product.json')
+  const key = path.relative(path.join(vscode.env.appRoot, 'out'), file).split(path.sep).join('/')
+  try {
+    const text = fs.readFileSync(product, 'utf8')
+    const escaped = key.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
+    const entry = new RegExp(`("${escaped}"\\s*:\\s*")([^"]*)(")`)
+    const match = text.match(entry)
+    if (!match) return true // this VS Code doesn't check that file
+    const hash = require('crypto').createHash('sha256').update(fs.readFileSync(file)).digest('base64').replace(/=+$/, '')
+    if (match[2] === hash) return true
+    fs.writeFileSync(product, text.replace(entry, `$1${hash}$3`), 'utf8')
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
 function writeWorkbench(file, html) {
   try {
     fs.writeFileSync(file, html, 'utf8')
+    syncChecksum(file)
     return true
   } catch (error) {
     const denied = error && (error.code === 'EPERM' || error.code === 'EACCES')
@@ -97,7 +123,7 @@ async function enable(context) {
   if (!writeWorkbench(file, patched)) return
   await context.globalState.update(STATE_KEY, true)
   await offerReload(
-    'Plotter Tide background installed. Reload the window to see it. VS Code may then say its installation is "corrupt": that is expected; choose "Don\'t Show Again".'
+    'Plotter Tide background installed. Reload the window to see it.'
   )
 }
 
@@ -118,7 +144,11 @@ async function disable(context) {
 async function checkAfterUpdate(context) {
   if (!context.globalState.get(STATE_KEY)) return
   const file = findWorkbenchHtml()
-  if (!file || isPatched(fs.readFileSync(file, 'utf8'))) return
+  if (!file) return
+  if (isPatched(fs.readFileSync(file, 'utf8'))) {
+    syncChecksum(file) // a patch made by an older version of this extension left the checksum stale
+    return
+  }
   const choice = await vscode.window.showInformationMessage(
     'VS Code was updated and the Plotter Tide background was removed. Install it again?',
     'Install again',
