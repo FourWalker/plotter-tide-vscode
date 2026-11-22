@@ -1,0 +1,42 @@
+{
+  "name": "plotter-tide",
+  "displayName": "Plotter Tide",
+  "description": "Light and night color themes after Claude's Plotter Tide scene, with an optional animated pen-plotter background.",
+  "version": "1.0.1",
+  "publisher": "local",
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "https://github.com/FourWalker/plotter-tide-vscode.git" },
+  "homepage": "https://github.com/FourWalker/plotter-tide-vscode#readme",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Themes", "Other"],
+  "keywords": ["theme", "background", "plotter", "tide", "claude"],
+  "main": "./extension.js",
+  "extensionKind": ["ui"],
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "themes": [
+      { "label": "Plotter Tide", "uiTheme": "vs", "path": "./themes/plotter-tide-color-theme.json" },
+      { "label": "Plotter Tide Night", "uiTheme": "vs-dark", "path": "./themes/plotter-tide-night-color-theme.json" }
+    ],
+    "commands": [
+      { "command": "plotterTide.enableBackground", "title": "Plotter Tide: Enable Animated Background" },
+      { "command": "plotterTide.disableBackground", "title": "Plotter Tide: Disable Animated Background" }
+    ],
+    "configuration": {
+      "title": "Plotter Tide",
+      "properties": {
+        "plotterTide.background.opacity": {
+          "type": "number",
+          "default": 0.55,
+          "minimum": 0.05,
+          "maximum": 1,
+          "description": "How strongly the animated tide lines show over the editor (0.05–1). Run \"Plotter Tide: Enable Animated Background\" again after changing it."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build:scenes": "node scripts/build-scenes.mjs",
+    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-vsix.ps1"
+  }
+}
